@@ -70,6 +70,10 @@ URL parameters: `?area=tokyo|shiba|shibuya|shinjuku|chiyoda|chuo|fujinomiya`, `?
 `?cam=x,z,distance,azimuth,elevation`, `?radius=900`, `?traffic=0`, `?cars=600`, `?birds=150`, `?clouds=0.25`,
 `?ortho=0`. A page opened with parameters does not overwrite the saved settings.
 
+Player mode (`?player=1`, or the Player mode switch in the Traffic folder of the Settings panel): a character
+walks around the city — WASD moves along the camera's sight line, shift for run, F steals the nearest car and
+drives it (W throttle, A/D steer, F exits back into the city).
+
 ## Technical notes
 
 Some of the problems that shaped the code:
@@ -102,6 +106,9 @@ Some of the problems that shaped the code:
   coarse one of everything and a sharp one of the land just beyond the houses (`src/world/backdrop.js`).
 - **Streaming.** Tiles are 256 m squares meshed in Web Workers. The site loads what lies near the view by
   default; "whole city" in the settings loads everything.
+- **Destruction.** Buildings, cars, trees and props are destructible — the stolen car crumbles into them on
+  a crash, and a blast (**B** key or the *Blast* button in the Settings panel) breaks glass apart. Destroyed
+  structures emit debris bursts with physics; see `destruction.md` (Universal Destruction System).
 
 Rendering uses three.js (WebGL) with the pmndrs `postprocessing` composer: ambient occlusion (n8ao), the
 reflection pass, atmosphere and clouds, bloom and tone mapping.

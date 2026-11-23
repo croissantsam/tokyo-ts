@@ -7,11 +7,12 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "fetch": "node tools/pipeline/fetch.mjs",
-    "compile": "node --max-old-space-size=4096 tools/pipeline/compile.mjs",
-    "preview": "node tools/pipeline/preview.mjs",
-    "deploy": "node tools/deploy.mjs",
-    "test": "node tools/tests/tileformat.test.mjs && node tools/tests/road-markings.test.mjs"
+    "typecheck": "tsc --noEmit",
+    "fetch": "node tools/pipeline/fetch.ts",
+    "compile": "node --max-old-space-size=4096 tools/pipeline/compile.ts",
+    "preview": "node tools/pipeline/preview.ts",
+    "deploy": "node tools/deploy.ts",
+    "test": "node tools/tests/tileformat.test.ts && node tools/tests/road-markings.test.ts"
   },
   "license": "MIT",
   "dependencies": {
@@ -29,7 +30,9 @@
     "three": "^0.186.1"
   },
   "devDependencies": {
+    "@types/three": "^0.187.0",
     "sharp": "^0.35.5",
+    "typescript": "^7.0.2",
     "vite": "^8.3.2"
   }
 }
