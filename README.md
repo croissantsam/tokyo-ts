@@ -70,9 +70,6 @@ URL parameters: `?area=tokyo|shiba|shibuya|shinjuku|chiyoda|chuo|fujinomiya`, `?
 `?cam=x,z,distance,azimuth,elevation`, `?radius=900`, `?traffic=0`, `?cars=600`, `?birds=150`, `?clouds=0.25`,
 `?ortho=0`. A page opened with parameters does not overwrite the saved settings.
 
-Player mode (`?player=1`, or the Player mode switch in the Traffic folder of the Settings panel): a character
-walks around the city — WASD moves along the camera's sight line, shift for run, F steals the nearest car and
-drives it (W throttle, A/D steer, F exits back into the city).
 
 ## Technical notes
 

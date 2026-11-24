@@ -248,7 +248,7 @@ interface Lane {
   stop: number;
 }
 
-interface Car {
+export interface Car {
   type: number;
   color: number;
   lane: Lane | null;
@@ -258,9 +258,6 @@ interface Car {
   next?: Lane | null;
   waited: number;
   destructible?: Destructible;
-  stolen?: boolean;
-  pos?: THREE.Vector3; // the world position while the car is stolen and driven by the player
-  h?: number;          // ...and its heading
 }
 
 interface Fleet { name: string; L: number; share: number; spec: VehicleSpec; mesh: THREE.InstancedMesh; beams: THREE.InstancedMesh }
@@ -456,20 +453,6 @@ export class Traffic {
       if (car.destructible?.state === 'destroyed') { // a destroyed car leaves the road (its burst marks the spot)
         if (car.lane) { const i = car.lane.cars.indexOf(car); if (i >= 0) car.lane.cars.splice(i, 1); }
         const j = this.cars.indexOf(car); if (j >= 0) this.cars.splice(j, 1);
-        continue;
-      }
-      if (car.stolen) {
-        // a stolen car is driven by the player (player.js): hold it in its lane's books, and write it
-        // wherever the player puts it (car.pos / car.h) so the instance follows along.
-        const i = counts[car.type]++;
-        if (car.pos) {
-          d.position.copy(car.pos);
-          d.rotation.set(0, car.h ?? 0, 0);
-          d.updateMatrix();
-          const fleet = this.fleets[car.type];
-          fleet.mesh.setMatrixAt(i, d.matrix);
-          fleet.mesh.instanceMatrix.needsUpdate = true;
-        }
         continue;
       }
       if (!car.lane && !this.spawnCar(car, focus)) continue; // nowhere to drive near the focus right now

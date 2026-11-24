@@ -15,7 +15,6 @@ import { buildRailways } from './world/rails.ts';
 import { buildFlyovers } from './world/flyovers.ts';
 import { Traffic, MAX_CARS } from './world/traffic.ts';
 import { DestructionManager } from './world/destruction.ts';
-import { Player } from './world/player.ts';
 import { buildStructures } from './world/structures.ts';
 import { loadOrtho } from './world/ortho.ts';
 import { Environment, installSkyLight } from './world/environment.ts';
@@ -156,7 +155,6 @@ if (manifest.structures) scene.add(await buildStructures(`tiles/${AREA}/${manife
 const traffic = new Traffic(await (await fetch(`tiles/${AREA}/${manifest.roads}`)).json(), streamer.surface, destruction);
 if (params.get('cars') != null) traffic.count = Math.min(MAX_CARS, Number(params.get('cars')) || 0);
 if (params.get('traffic') !== '0') scene.add(traffic.group); else traffic.lamps.visible = false;
-const player = new Player({ scene, traffic, ground: (x, z) => streamer.ground(x, z), camera, controls, destruction });
 document.getElementById('credits').textContent = manifest.attribution.map((a) => a.split(' (')[0]).join(' · ');
 
 // initial view: the area's own, or over its origin looking north-west (Shibuya: across the Scramble Crossing to the station)
@@ -313,10 +311,6 @@ const previewMode = { on: params.get('preview') !== '0', live: params.get('previ
   streets.add(traffic, 'highway', 0, 20, 0.5).name('highway traffic');
   streets.add(state, 'trains');
   streets.add(birds.geometry, 'instanceCount', 0, MAX_BIRDS, 10).name('birds');
-  streets.add(player, 'enabled').name('player mode').listen().onChange((v) => {
-    if (v) player.enable(controls.target.clone());
-    else { player.exit(); controls.enabled = true; }
-  });
   withReset(streets);
 
   // the universal destruction system (destruction.md): damage breaks buildings, blasts and crashes
@@ -356,11 +350,8 @@ const previewMode = { on: params.get('preview') !== '0', live: params.get('previ
   const strip = (saved) => { delete saved.controllers?.city; delete saved.folders?.['Abstract model']?.controllers?.['abstract model'];
     // (nor is the hour: the page always opens on Tokyo's own time, the live clock running)
     for (const k of ['live clock', 'auto play', 'time']) delete saved.folders?.['Time (Tokyo)']?.controllers?.[k];
-    // (nor is the player: a page without ?player= opens on the view as it stands)
-    delete saved.folders?.Traffic?.controllers?.player;
     return saved;
   };
-  if (params.get('player') === '1') player.enable(controls.target.clone());
   if (!explicit) {
     try {
       const saved = JSON.parse(localStorage.getItem(KEY) ?? 'null');
@@ -481,7 +472,9 @@ function glideStep(dt) {
 let picked = null;
 const raycaster = new THREE.Raycaster();
 let downAt = null;
-renderer.domElement.addEventListener('pointerdown', (e) => { downAt = [e.clientX, e.clientY]; });
+renderer.domElement.addEventListener('pointerdown', (e) => {
+  downAt = [e.clientX, e.clientY];
+});
 renderer.domElement.addEventListener('pointerup', (e) => {
   if (!downAt || Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 4) return;
   raycaster.setFromCamera(new THREE.Vector2((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1), camera);
@@ -507,7 +500,7 @@ function tick() {
   const dt = Math.min(clock.getDelta(), 0.1);
   clockTime.advance(dt);
   renderer.info.reset();
-  if (!player.enabled) { keyboardPan(dt); wheelZoom(dt); glideStep(dt); controls.update(); }
+  keyboardPan(dt); wheelZoom(dt); glideStep(dt); controls.update();
 
   // The view keeps its height: the focus stays at the level it was given at the start (the ground there), whatever
   // the ground does under it as the view is moved — following the terrain made the picture bob up and down.
@@ -530,8 +523,6 @@ function tick() {
   signs.update();
   railways.userData.trains.update(dt, env.night);
   if (traffic.group.parent) traffic.update(dt, controls.target);
-  player.update(dt, keys);
-  player.follow();
   destruction.update(dt);
   env.setSky(...Object.values(atmosphere.setDate(clockTime.date())));
   clockText.textContent = clockTime.label();
@@ -561,10 +552,7 @@ function tick() {
     `tiles ${s.loaded}/${manifest.tiles.length}${streamer.pending ? ` (+${streamer.pending})` : ''} · ${s.buildings} buildings\n` +
     (picked ? `\n▸ ${USAGE[picked.usage] ?? 'usage ' + picked.usage}, ${picked.height.toFixed(1)} m` +
       `${picked.storeys ? `, ${picked.storeys} floors` : ''}, base ${picked.base.toFixed(1)} m\n` : '') +
-    player.enabled ?
-      `\nWASD walk · shift run · F steal a car\nW drive · A/D steer · F exit the car` :
-      `\ndrag pan · right-drag rotate · wheel zoom\nWASD move (shift fast) · N day/night · click building`;
-    (player.inCar && player.car?.destructible ? `\ncar health ${Math.round((player.car.destructible.health / player.car.destructible.maxHealth) * 100)}%` : '');
+    `\ndrag pan · right-drag rotate · wheel zoom\nWASD move (shift fast) · N day/night · click building`;
 }
 // The switch in the corner shows this very view as the other mode draws it: as it moves (the panel's live preview:
 // every few frames), or else each time the view has come to rest. For that the
@@ -699,4 +687,4 @@ function frame() {
 requestAnimationFrame(frame);
 
 // (for the console and for tools: tick() draws a frame by hand, clockTime sets the hour)
-window.__app = { scene, camera, controls, streamer, env, renderer, materials, ao, atmosphere, traffic, shared, tick, clockTime, waterMirror, lampLight, contact, props, birds, railways, variant, setVariant, player, destruction };
+window.__app = { scene, camera, controls, streamer, env, renderer, materials, ao, atmosphere, traffic, shared, tick, clockTime, waterMirror, lampLight, contact, props, birds, railways, variant, setVariant, destruction };
