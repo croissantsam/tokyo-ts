@@ -14,6 +14,15 @@ facades and windows, street furniture, road paint, traffic, night lighting, wate
 The architecture follows [BoundlessNYC](https://github.com/mkturkcan/boundless-nyc): an offline compiler turns
 raw records into compact binary tiles, and the client streams and meshes them.
 
+## TypeScript rebuild
+
+This repository is a full **TypeScript rebuild** of the original
+[Procedural Tokyo](https://github.com/jeantimex/tokyo) by jeantimex. The whole codebase — both the browser
+client (`src/`) and the offline pipeline (`tools/`) — has been rebuilt from JavaScript to TypeScript, with
+strict type-checking (`npm run typecheck` runs `tsc --noEmit`) and `.ts` sources throughout. The data sources,
+the runtime behaviour and the rendered result are unchanged; what changed is the language and tooling underneath:
+every module is now typed, and the build and scripts run `.ts` directly.
+
 ## Scenes
 
 | Area | What is there |
@@ -27,7 +36,7 @@ raw records into compact binary tiles, and the client streams and meshes them.
 | Fujinomiya | A town at the foot of Mt Fuji, with the mountain as a 60 km terrain backdrop |
 
 Each area is about 3.4 x 2.8 km. Adding another city that PLATEAU covers is one entry in
-`tools/pipeline/config.mjs` (see [Pipeline](#pipeline)).
+`tools/pipeline/config.ts` (see [Pipeline](#pipeline)).
 
 PLATEAU covers about 300 Japanese cities so far and adds more each year. The official lists:
 [open data by city](https://www.mlit.go.jp/plateau/open-data/) (Project PLATEAU, MLIT), the
@@ -80,27 +89,27 @@ Some of the problems that shaped the code:
   heights along a shared edge and there are no seams. Building bases are checked against the terrain at compile
   time and the difference is logged (a median of about 0.1 m in Fujinomiya).
 - **Paint that stays on the road.** Road surfaces, lane lines and symbols are split along the terrain mesh's own
-  triangles (`src/world/drape.js`), so markings never sink into a slope, even across tile boundaries. `npm test`
+  triangles (`src/world/drape.ts`), so markings never sink into a slope, even across tile boundaries. `npm test`
   checks the clearance geometrically.
 - **Roads without detail.** Where PLATEAU maps a road only as an outline, it is split into carriageway and
-  sidewalk from the OpenStreetMap centrelines (`tools/pipeline/roadsplit.mjs`).
+  sidewalk from the OpenStreetMap centrelines (`tools/pipeline/roadsplit.ts`).
 - **Bridges and flyovers.** The elevation model shows the top of a bridge, not what passes under it. Street
   bridges are levelled bank to bank, the expressway is lifted onto its own structure by layer, and ramps are
-  graded so they always land (`tools/pipeline/roadprofile.mjs`).
+  graded so they always land (`tools/pipeline/roadprofile.ts`).
 - **Thousands of lamps without thousands of lights.** Street lamps and headlights are flat quads drawn from
   above into a light map, where overlapping lamps keep the brighter value instead of adding up. Lit surfaces
   read that map, with the lamp's height stored alongside so a lamp under a flyover does not light the deck
-  (`src/world/lamplight.js`).
+  (`src/world/lamplight.ts`).
 - **Water as a mirror.** The city is drawn a second time, flipped below the water level, and laid on the water
   by viewing angle. Ripples shift the picture; the clouds are added by sampling the cloud system's own weather
-  map where the reflected ray meets the cloud base (`src/world/mirror.js`, `materials.js`).
+  map where the reflected ray meets the cloud base (`src/world/mirror.ts`, `materials.ts`).
 - **Window reflections.** Glass panes are marked in the colour buffer's alpha channel and resolved in a
-  screen-space reflection pass (`src/world/reflections.js`).
+  screen-space reflection pass (`src/world/reflections.ts`).
 - **Birds on the GPU.** Every bird is placed in the vertex shader from the time and a few random numbers; a
   small texture carries each flock's tree and how far it has settled, so a thousand birds cost the CPU almost
-  nothing (`src/world/birds.js`).
+  nothing (`src/world/birds.ts`).
 - **A mountain behind a town.** The backdrop is a 120 m terrain grid 60 km wide under two aerial photos: a
-  coarse one of everything and a sharp one of the land just beyond the houses (`src/world/backdrop.js`).
+  coarse one of everything and a sharp one of the land just beyond the houses (`src/world/backdrop.ts`).
 - **Streaming.** Tiles are 256 m squares meshed in Web Workers. The site loads what lies near the view by
   default; "whole city" in the settings loads everything.
 - **Destruction.** Buildings, cars, trees and props are destructible — the stolen car crumbles into them on
@@ -114,7 +123,7 @@ reflection pass, atmosphere and clouds, bloom and tone mapping.
 
 ```
 npm install
-node tools/assets/fetch_textures.mjs    # once: CC0 textures from Poly Haven -> public/textures/ (14 MB)
+node tools/assets/fetch_textures.ts    # once: CC0 textures from Poly Haven -> public/textures/ (14 MB)
 npm run fetch -- --area=tokyo           # raw data -> data/raw/<area>/
 npm run compile -- --area=tokyo         # data/raw -> public/tiles/<area>/
 npm run dev                             # http://localhost:5280
@@ -134,7 +143,7 @@ npm test           # tile format round trip + road-marking clearance over the co
 ```
 
 All scripts take `--area=<id>`. An area is a centre point and a block of PLATEAU grid squares, defined in
-`tools/pipeline/config.mjs`; optional `backdrop` (kilometres of surrounding terrain) and `view` (the opening
+`tools/pipeline/config.ts`; optional `backdrop` (kilometres of surrounding terrain) and `view` (the opening
 camera) can be added per area.
 
 | Source | What is taken |
@@ -155,7 +164,7 @@ World frame: metres, x east, y up (Tokyo Peil height), z south; the origin is th
 | File | Contents |
 |---|---|
 | `manifest.json` | origin, bounds, tile list, terrain grid, bridge decks, attribution |
-| `t_<x>_<z>.bin` | one 256 m tile: buildings, ground surfaces, paint, props, wires, signs (`src/shared/tileformat.js`) |
+| `t_<x>_<z>.bin` | one 256 m tile: buildings, ground surfaces, paint, props, wires, signs (`src/shared/tileformat.ts`) |
 | `terrain.bin` | Float32 height grid, 5 m spacing |
 | `roads.json` | road graph with a level per point (ground, bridge or flyover), and signalled junctions |
 | `rails.json`, `structures.json` | railway lines; footbridges, platforms and canopies |
